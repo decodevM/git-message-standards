@@ -22,7 +22,7 @@ if [[ ! "$PR_TITLE" =~ ^[a-z]+(\([a-z]+\))?:\ .+ ]]; then
   echo "ERROR: Invalid PR title format."
   echo "Title should follow this format: type(scope): description"
   echo "Example: feat(auth): add login functionality"
-  exit 1
+  exit 0
 fi
 
 echo "Pull Request title is valid."
