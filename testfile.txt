@@ -1,1 +1,1 @@
-Change the commit message
+Change the commit messages
