@@ -7,7 +7,7 @@ on:
   pull_request:
     branches:
       - main  # Runs when a pull request is created targeting the 'main' branch
-
+      
 jobs:
   validate-commit-message:
     runs-on: ubuntu-latest
@@ -15,20 +15,36 @@ jobs:
     steps:
       # Step 1: Checkout the repository
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
 
-      # Step 2: Fetch the commit message from GitHub context
+      # Step 2: Fetch the commit message
       - name: Fetch commit message
-        id: commit_message
-        run: echo "COMMIT_MSG=${{ github.event.head_commit.message }}" >> $GITHUB_ENV
-
-      # Step 3: Validate commit message
-      - name: Validate commit message format
         run: |
-          # Use the script to validate the commit message
+          # Fetch the commit message of the last commit
+          COMMIT_MSG=$(git log -1 --pretty=format:"%B")
+          echo "Commit Message: $COMMIT_MSG"
+          
+          # Write the commit message to commit-msg.txt
           echo "$COMMIT_MSG" > commit-msg.txt
+
+      # Step 3: Print the contents of commit-msg.txt for debugging
+      - name: Print commit-msg.txt contents
+        run: |
+          echo "Printing commit-msg.txt contents:"
+          cat commit-msg.txt
+
+      # Step 4: Run the commit-msg validation script
+      - name: Run commit-msg script
+        run: |
+          # Make the commit-msg script executable
           chmod +x .github/scripts/commit-msg
+          
+          # Run the commit-msg script to validate the message
           ./.github/scripts/commit-msg commit-msg.txt
+
+
+
+    
 
   check-github-actions:
     runs-on: ubuntu-latest
