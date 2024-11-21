@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Path to the commit message file
+# Path to the commit message File
 COMMIT_MSG_FILE=$1
 
 # Read the commit message

@@ -1,4 +1,4 @@
-name: Validate Commit Message and Check GitHub Actions Changes
+name: Validate Commit Message and Check GitHub Actions Changes on PR
 
 on:
   push:
@@ -38,6 +38,9 @@ jobs:
         run: |
           # Run the commit-msg script to validate the message (file)
           ./.github/scripts/commit-msg commit-msg.txt
+
+
+
 
 
 

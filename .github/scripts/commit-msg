@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Check if the input is a file or a string
+# Check if the input is a file or a String 
 if [ -f "$1" ]; then
   # If it's a file, read the commit message from the file
   COMMIT_MSG=$(<"$1")
