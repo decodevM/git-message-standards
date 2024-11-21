@@ -17,34 +17,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Install dependencies (if any)
-      - name: Set up environment
+      # Step 2: Fetch the commit message from GitHub context
+      - name: Fetch commit message
+        id: commit_message
+        run: echo "COMMIT_MSG=${{ github.event.head_commit.message }}" >> $GITHUB_ENV
+
+      # Step 3: Validate commit message
+      - name: Validate commit message format
         run: |
-          sudo apt-get update
-
-      # Step 3: Fetch the commit hash of the latest commit
-      - name: Get the last commit hash
-        id: last_commit
-        run: |
-          git log -1 --pretty=format:"%H" > commit_hash.txt
-          cat commit_hash.txt
-
-      # Step 4: Validate commit message
-      - name: Validate commit message
-        run: |
-          # Fetch the last commit hash
-          COMMIT_HASH=$(cat commit_hash.txt)
-          COMMIT_MESSAGE=$(git log -1 --pretty=format:"%B" $COMMIT_HASH)
-
-          # Write the commit message to a temporary file
-          echo "$COMMIT_MESSAGE" > commit-msg.txt
-
-          # Use the script to validate the message
+          # Use the script to validate the commit message
+          echo "$COMMIT_MSG" > commit-msg.txt
           chmod +x .github/scripts/commit-msg
           ./.github/scripts/commit-msg commit-msg.txt
-
-        env:
-          GIT_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
 
   check-github-actions:
     runs-on: ubuntu-latest
@@ -56,12 +40,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Fetch the main branch version of the GitHub Actions workflow
+      # Step 2: Fetch the base branch (main) version of the GitHub Actions workflow
       - name: Fetch base branch (main)
         run: |
           git fetch origin main
 
-      # Step 3: Compare the workflow files in the PR and the base branch
+      # Step 3: Compare GitHub Actions workflow files
       - name: Compare GitHub Actions workflows
         run: |
           # Compare .github/workflows/*.yml files
