@@ -14,7 +14,7 @@ HEADER=$(head -n 1 "$COMMIT_MSG_FILE")
 # - Type is one of the valid types (feat, fix, docs, etc.)
 # - Scope is mandatory and capitalized
 # - Description starts with an uppercase letter and is up to 150 characters
-REGEX="^(feat|fix|docs|style|refactor|perf|test|chore)\([A-Z][a-zA-Z0-9_-]+\): [A-Z].{0,149}(\n\n.+)?(\n\nRefs: #?[a-zA-Z0-9_-]+)?$"
+REGEX="^(feat|fix|docs|style|refactor|perf|test|chore)\([A-Za-z0-9 _-]+\): [A-Z].{0,149}(\n\n.+)?(\n\nRefs: #?[a-zA-Z0-9_-]+)?$"
 
 # Define styled output helpers
 RED="\033[1;31m"
