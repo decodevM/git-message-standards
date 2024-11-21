@@ -1,3 +1,37 @@
+name: Validate Pull Requests
+
+on:
+  pull_request:
+    branches:
+      - main # Ensures this runs only for PRs targeting the `main` branch
+
+jobs:
+  validate-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR Branch
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }} # Check out the source branch for validation
+
+      - name: Validate PR Title and Description
+        run: |
+          echo "Validating PR title and description..."
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PR_BODY="${{ github.event.pull_request.body }}"
+          echo "Title: $PR_TITLE"
+          echo "Body: $PR_BODY"
+
+          # Add your validation logic here
+          if [[ ! "$PR_TITLE" =~ ^[a-z]+(\([a-z]+\))?:\ .+ ]]; then
+            echo "Invalid PR title format."
+            exit 1
+          fi
+          echo "PR title format is valid."
+
+
 # name: Pull Request Validation
 
 # on:
@@ -38,38 +72,3 @@
 
 #           # Run your PR validation script
 #           ./.github/scripts/validate-pr "$PR_NUMBER" "$REPO_OWNER" "$REPO_NAME" "$GITHUB_TOKEN"
-
-
-
-
-
-name: Validate Pull Requests
-
-on:
-  pull_request:
-    branches:
-      - main
-
-jobs:
-  validate-pr:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout PR Branch
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.ref }}
-
-      - name: Validate PR Title and Description
-        run: |
-          echo "Validating PR title and description..."
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          PR_BODY="${{ github.event.pull_request.body }}"
-          echo "Title: $PR_TITLE"
-          echo "Body: $PR_BODY"
-
-          # Example validation logic here
-
-    #   - name: Run Additional Validation Scripts
-    #     run: ./scripts/validate-pr.sh
