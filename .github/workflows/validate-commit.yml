@@ -3,10 +3,8 @@ name: Validate Commit Message and Check GitHub Actions Changes on PR
 on:
   push:
     branches:
-      - '*'
-    # Exclude the main branch
-    branches-ignore:
-      - main  # Runs for all branches when a commit is pushed
+      - '*'  # Trigger on all branches
+      
 jobs:
   validate-commit-message:
     runs-on: ubuntu-latest
