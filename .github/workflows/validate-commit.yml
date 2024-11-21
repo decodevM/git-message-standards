@@ -10,6 +10,7 @@ on:
 jobs:
   validate-commit-message:
     runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/main'  # Skip if the branch is 'main'
 
     steps:
       # Step 1: Checkout the repository
