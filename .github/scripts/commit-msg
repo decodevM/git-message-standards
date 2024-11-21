@@ -13,21 +13,19 @@ else
   exit 1
 fi
 
-# Read the commit message header (first line)
-# HEADER=$(head -n 1 "$COMMIT_MSG_FILE")
-
 # Define the regular expression for commit message validation
 # This regex ensures:
 # - Type is one of the valid types (feat, fix, docs, etc.)
-# - Scope is mandatory and capitalized
-# - Description starts with an uppercase letter and is up to 150 characters
-REGEX="^(feat|fix|docs|style|refactor|perf|test|chore)\([A-Z][a-zA-Z0-9_-]+\): [A-Z].{0,149}(\n\n.+)?(\n\nRefs: #?[a-zA-Z0-9_-]+)?$"
+# - Scope allows single or multi-word phrases starting with a capital letter
+# - Description starts with an uppercase letter and is ≤150 characters
+# - Body (optional) follows a blank line and can span multiple lines
+# - Footer (optional) includes `Refs:` for references
+REGEX="^(feat|fix|docs|style|refactor|perf|test|chore)\(([A-Z][a-zA-Z0-9 _-]*)\): [A-Z].{0,149}(\n\n.+)?(\n\nRefs: #?[a-zA-Z0-9 _-]+)?$"
 
 # Define styled output helpers
 RED="\033[1;31m"
 GREEN="\033[1;32m"
 BLUE="\033[1;34m"
-CYAN="\033[1;36m"
 YELLOW="\033[1;33m"
 MAGENTA="\033[1;35m"
 BOLD="\033[1m"
@@ -36,9 +34,7 @@ WHITE="\033[1;37m"
 
 # Define a function for printing a dynamic horizontal line
 print_line() {
-  # Get the length of the message
   local message_length=$1
-  # Create a line of '=' based on the message length
   printf "${WHITE}%*s\n" $((message_length + 1)) | tr " " "="
 }
 
@@ -72,7 +68,7 @@ else
   message="- <type>: feat, fix, docs, style, refactor, perf, test, chore"
   printf "${BLUE}    ${message}${RESET}\n"
 
-  message="- <Scope>: Mandatory, starts with an uppercase letter (e.g., UI, Backend)"
+  message="- <Scope>: Mandatory, allows one or more words (e.g., User Interface, Backend)"
   printf "${BLUE}    ${message}${RESET}\n"
 
   message="- <description>: Must start with an uppercase letter and be max 150 chars"
@@ -89,8 +85,8 @@ else
 
   message="Examples:"
   printf "${MAGENTA}${BOLD}Examples:${RESET}\n"
-  message="✅ feat(UI): Add user authentication feature"
-  printf "${GREEN}  ✅ ${message}${RESET}\n"
+  message="✅ feat(User Interface): Add user authentication feature"
+  printf "${GREEN}  ${message}${RESET}\n"
   message="  Implemented a secure authentication flow using JWT tokens."
   printf "${GREEN}    ${message}${RESET}\n"
   message="  Refs: #CU-86967ku38" # Example task ID from ClickUp
