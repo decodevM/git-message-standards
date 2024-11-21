@@ -1,1 +1,1 @@
-test(Actions): Add github actions
+test(Actions): Add github
