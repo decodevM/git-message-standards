@@ -1,13 +1,20 @@
-#!/bin/sh
+#!/bin/bash
 
-# Path to the commit message File
-COMMIT_MSG_FILE=$1
-
-# Read the commit message
-COMMIT_MSG=$(<"$COMMIT_MSG_FILE")
+# Check if the input is a file or a String 
+if [ -f "$1" ]; then
+  # If it's a file, read the commit message from the file
+  COMMIT_MSG=$(<"$1")
+elif [ -n "$1" ]; then
+  # If it's a string, use the passed argument as the commit message
+  COMMIT_MSG="$1"
+else
+  # If no input is provided, print an error message
+  echo "❌ ERROR: No commit message or file provided."
+  exit 1
+fi
 
 # Read the commit message header (first line)
-HEADER=$(head -n 1 "$COMMIT_MSG_FILE")
+# HEADER=$(head -n 1 "$COMMIT_MSG_FILE")
 
 # Define the regular expression for commit message validation
 # This regex ensures:
@@ -36,7 +43,7 @@ print_line() {
 }
 
 # Check if the commit message is empty
-if [ -z "$HEADER" ]; then
+if [ -z "$COMMIT_MSG" ]; then
   print_line 39 # Adjust the number (39) if you change the error message length
   printf "${MAGENTA}${BOLD}❌ ERROR: Commit message is empty.${RESET}\n"
   print_line 39
