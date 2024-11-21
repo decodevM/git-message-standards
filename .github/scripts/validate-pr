@@ -25,4 +25,4 @@ if [[ ! "$PR_TITLE" =~ ^[a-z]+(\([a-z]+\))?:\ .+ ]]; then
   exit 1
 fi
 
-echo "PR title is valid."
+echo "Pull Request title is valid."
