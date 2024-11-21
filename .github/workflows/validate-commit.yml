@@ -32,15 +32,6 @@ jobs:
         run: |
           echo "Printing commit-msg.txt contents:"
           cat commit-msg.txt
-
-      # Step 4: Run the commit-msg validation script with the string (commit message)
-      - name: Run commit-msg script with string input
-        run: |
-          # Make the commit-msg script executable
-          chmod +x .github/scripts/commit-msg
-          
-          # Run the commit-msg script to validate the message (string)
-          ./.github/scripts/commit-msg "$COMMIT_MSG"
         
       # Step 5: Run the commit-msg validation script with the file input
       - name: Run commit-msg script with file input
