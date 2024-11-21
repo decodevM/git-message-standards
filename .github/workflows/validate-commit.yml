@@ -1,0 +1,77 @@
+name: Validate Commit Message and Check GitHub Actions Changes
+
+on:
+  push:
+    branches:
+      - '**'  # Runs for all branches when a commit is pushed
+  pull_request:
+    branches:
+      - main  # Runs when a pull request is created targeting the 'main' branch
+
+jobs:
+  validate-commit-message:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Install dependencies (if any)
+      - name: Set up environment
+        run: |
+          sudo apt-get update
+
+      # Step 3: Fetch the commit hash of the latest commit
+      - name: Get the last commit hash
+        id: last_commit
+        run: |
+          git log -1 --pretty=format:"%H" > commit_hash.txt
+          cat commit_hash.txt
+
+      # Step 4: Validate commit message
+      - name: Validate commit message
+        run: |
+          # Fetch the last commit hash
+          COMMIT_HASH=$(cat commit_hash.txt)
+          COMMIT_MESSAGE=$(git log -1 --pretty=format:"%B" $COMMIT_HASH)
+
+          # Write the commit message to a temporary file
+          echo "$COMMIT_MESSAGE" > commit-msg.txt
+
+          # Use the script to validate the message
+          chmod +x .github/scripts/commit-msg
+          ./.github/scripts/commit-msg commit-msg.txt
+
+        env:
+          GIT_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+
+  check-github-actions:
+    runs-on: ubuntu-latest
+    needs: validate-commit-message
+    if: github.event_name == 'pull_request'  # Run only on pull requests to main
+
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Fetch the main branch version of the GitHub Actions workflow
+      - name: Fetch base branch (main)
+        run: |
+          git fetch origin main
+
+      # Step 3: Compare the workflow files in the PR and the base branch
+      - name: Compare GitHub Actions workflows
+        run: |
+          # Compare .github/workflows/*.yml files
+          DIFF=$(git diff origin/main -- .github/workflows/)
+
+          if [ -n "$DIFF" ]; then
+            echo "❌ ERROR: GitHub Actions workflow files have changed!"
+            echo "The following differences were found:"
+            echo "$DIFF"
+            exit 1
+          else
+            echo "✅ SUCCESS: No changes detected in GitHub Actions workflow files."
+          fi
