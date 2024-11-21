@@ -7,4 +7,4 @@ Update github actions verification commit message
 
 Change regex
 
-Test body and ref
+Test body and refs
