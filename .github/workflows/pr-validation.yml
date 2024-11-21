@@ -33,4 +33,4 @@ jobs:
           GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
 
           # Run your PR validation script
-          ./.github/scripts/validate-pr.sh "$PR_NUMBER" "$REPO_OWNER" "$REPO_NAME" "$GITHUB_TOKEN"
+          ./.github/scripts/validate-pr "$PR_NUMBER" "$REPO_OWNER" "$REPO_NAME" "$GITHUB_TOKEN"
