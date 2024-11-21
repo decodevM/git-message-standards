@@ -3,14 +3,12 @@ name: Validate Commit Message and Check GitHub Actions Changes on PR
 on:
   push:
     branches:
-      - '**'  # Runs for all branches when a commit is pushed
-  pull_request:
-    branches:
-      - main  # Runs when a pull request is created targeting the 'main' branch
-
+      - '*'  # Trigger on all branches
+      
 jobs:
   validate-commit-message:
     runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/main'  # Skip if the branch is 'main'
 
     steps:
       # Step 1: Checkout the repository

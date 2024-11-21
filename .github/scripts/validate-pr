@@ -1,0 +1,28 @@
+#!/bin/bash
+
+PR_NUMBER=$1
+REPO_OWNER=$2
+REPO_NAME=$3
+GITHUB_TOKEN=$4
+
+# Fetch PR details from GitHub API
+PR_DETAILS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+  "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/pulls/$PR_NUMBER")
+
+# Print the full PR details for debugging
+echo "PR Details: $PR_DETAILS"
+
+# Extract the PR title from the API response
+PR_TITLE=$(echo "$PR_DETAILS" | jq -r '.title')
+
+echo "PR Title: $PR_TITLE"
+
+# Validate PR title format using regular expression
+if [[ ! "$PR_TITLE" =~ ^[a-z]+(\([a-z]+\))?:\ .+ ]]; then
+  echo "ERROR: Invalid PR title format."
+  echo "Title should follow this format: type(scope): description"
+  echo "Example: feat(auth): add login functionality"
+  exit 1
+fi
+
+echo "PR title is valid."
