@@ -1,5 +1,6 @@
 name: Validate Commit Message and Check GitHub Actions Changes
 
+
 on:
   push:
     branches:
