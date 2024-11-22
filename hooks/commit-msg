@@ -1,65 +1,6 @@
 #!/bin/bash
 
-# Regex pattern broken down for readability
-
-
-# Check if the input is a file or a String 
-if [ -f "$1" ]; then
-  COMMIT_MSG=$(<"$1") # If it's a file, read the commit message from the file
-elif [ -n "$1" ]; then
-  COMMIT_MSG="$1" # If it's a string, use the passed argument as the commit message
-else
-  echo "❌ ERROR: No commit message or file provided." # No input provided
-  exit 1
-fi
-
-# Fixed regex pattern to properly handle valid commit messages
-COMMIT_MSG_PATTERN="^(feat|fix|docs|style|refactor|perf|test|chore)\([A-Z][a-zA-Z0-9 _-]*\): [A-Z].{1,149}(\n.+)*\n*\n*Refs: #(CU-)*[a-zA-Z0-9]+$"
-# COMMIT_MSG_PATTERN="^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)\(([A-Z][a-zA-Z0-9 _-]*)\): [A-Z].{0,149}(\n.*)*\nRefs: #[a-zA-Z0-9 _-]+$"
-
-
-
-
-# # Function to validate commit messages with detailed output
-
-#     if [[ "$COMMIT_MSG" =~ $COMMIT_MSG_PATTERN ]]; then
-#         echo "✓ Valid commit message"
-#         echo "Type: ${BASH_REMATCH[1]}"
-#         echo "Scope: ${BASH_REMATCH[2]}"
-#         return 1
-#     else
-#         echo "✗ Invalid commit message"
-#         echo "Format: <type>(<scope>): <description>"
-#         echo "Example: feat(Authentication): Add login feature"
-#         return 1
-#     fi
-
-
-
-
-
 printf "\n"
-# # Check if the input is a file or a String 
-# if [ -f "$1" ]; then
-#   # If it's a file, read the commit message from the file
-#   COMMIT_MSG=$(<"$1")
-# elif [ -n "$1" ]; then
-#   # If it's a string, use the passed argument as the commit message
-#   COMMIT_MSG="$1"
-# else
-#   # If no input is provided, print an error message
-#   echo "❌ ERROR: No commit message or file provided."
-#   exit 1
-# fi
-
-# Define the regular expression for commit message validation
-# This regex ensures:
-# - Type is one of the valid types (feat, fix, docs, etc.)
-# - Scope allows single or multi-word phrases starting with a capital letter
-# - Description starts with an uppercase letter and is ≤150 characters
-# - Body (optional) follows a blank line and can span multiple lines
-# - Footer (optional) includes `Refs:` for references
-REGEX="^(feat|fix|docs|style|refactor|perf|test|chore)\([A-Z][a-zA-Z0-9 _-]*\): [A-Z].{1,149}(\n.+)*\n*\n*Refs: #CU-[a-zA-Z0-9]+$"
 
 # Define styled output helpers
 RED="\033[1;31m"
@@ -67,87 +8,116 @@ GREEN="\033[1;32m"
 BLUE="\033[1;34m"
 YELLOW="\033[1;33m"
 MAGENTA="\033[1;35m"
-BOLD="\033[1m"
-RESET="\033[0m"
 WHITE="\033[1;37m"
+RESET="\033[0m"
+BOLD="\033[1m"
 
-# Define a function for printing a dynamic horizontal line
+# Dynamic horizontal line for styling
 print_line() {
-  local message_length=$1
-  printf "${WHITE}%*s\n" $((message_length + 1)) | tr " " "="
+  local length=$1
+  printf "${WHITE}%*s\n" $((length + 1)) | tr " " "="
 }
 
+# Constants
+SHORT_DESC_LENGTH=120
+SUCCESS_MSG="✅ SUCCESS: Your commit message follows the correct format."
+ERROR_MSG="❌ ERROR: Commit message does not follow the required format."
+EMPTY_MSG="❌ ERROR: Commit message is empty."
+TIP_MSG="💡 Tip: Use \`git commit --amend\` to modify your commit message."
+MISSING_SHORT_DESC="${RED}❌ ERROR: Short description is missing or improperly formatted.${RESET}"
+SHORT_DESC_LIMIT="${RED}❌ ERROR: Short description exceeds limit characters.${RESET}"
 
-# Check if the commit message is empty
-if [ -z "$COMMIT_MSG" ]; then
-  print_line 39 # Adjust the number (39) if you change the error message length
-  printf "${MAGENTA}${BOLD}❌ ERROR: Commit message is empty.${RESET}\n"
-  print_line 39
+# Define type and scope options in arrays
+TYPES=("feat" "fix" "docs" "style" "refactor" "perf" "test" "chore")
+SCOPES=("Authentication" "Backend" "API" "Database")
+
+# Generate type and scope regex dynamically (no trailing or leading spaces)
+TYPE_REGEX=$(IFS=\|; echo "${TYPES[*]}")
+SCOPE_REGEX=$(IFS=\|; echo "${SCOPES[*]}")
+
+# Define regex for each part of the commit message
+SHORT_DESC_REGEX="[A-Z][^\n]{1,${SHORT_DESC_LENGTH}}"         # Starts with an uppercase letter, max ${SHORT_DESC_LENGTH} characters
+MULTILINE_DESC_REGEX="(\n.+)*"                                  # Optional multiline description
+REFS_REGEX="Refs: #(CU-)*[a-zA-Z0-9]+"                          # Refs line with optional "CU-" prefix and alphanumeric task ID
+
+# Combine regex for full commit message validation
+COMMIT_MSG_PATTERN="^($TYPE_REGEX)\(($SCOPE_REGEX)\): $SHORT_DESC_REGEX$MULTILINE_DESC_REGEX\n*\n*$REFS_REGEX$"
+
+# Read the commit message (file or input string)
+if [ -f "$1" ]; then
+  COMMIT_MSG=$(<"$1")
+elif [ -n "$1" ]; then
+  COMMIT_MSG="$1"
+else
+  echo -e "${MAGENTA}${BOLD}$EMPTY_MSG${RESET}"
   exit 1
 fi
 
-# If the commit message is valid, show success with green ✅
+# Ensure the commit message is not empty
+if [[ -z "$COMMIT_MSG" ]]; then
+  print_line ${#EMPTY_MSG}
+  echo -e "${MAGENTA}${BOLD}$EMPTY_MSG${RESET}"
+  print_line ${#EMPTY_MSG}
+  exit 1
+fi
+
+# Extract and validate short description
+SHORT_DESC=$(echo "$COMMIT_MSG" | sed -n 's/^[^:]*: \(.*\)$/\1/p' | head -n 1)
+
+# Validate short description
+if [[ -z "$SHORT_DESC" ]]; then
+  echo -e $MISSING_SHORT_DESC
+  exit 1
+fi
+
+# Ensure short description length is within limits
+if (( ${#SHORT_DESC} > $SHORT_DESC_LENGTH )); then
+  echo -e $SHORT_DESC_LIMIT
+  exit 1
+fi
+
+# Validate full commit message format using regex
 if [[ "$COMMIT_MSG" =~ $COMMIT_MSG_PATTERN ]]; then
-  message="✅ SUCCESS: Your commit message follows the correct format."
-  print_line ${#message}
-  printf "${GREEN}${BOLD}${message}${RESET}\n"
-  print_line ${#message}
+  print_line ${#SUCCESS_MSG}
+  echo -e "${GREEN}${BOLD}$SUCCESS_MSG${RESET}"
+  print_line ${#SUCCESS_MSG}
+  exit 0
 else
-  # If the commit message is invalid, show error with red ❌ (but at the end)
+  # Invalid commit message
   message="Commit message requirements:"
   print_line ${#message}
-  printf "${YELLOW}${message}${RESET}\n"
-  print_line ${#message}
-
-  # Show the detailed format description (without line separators)
-  printf "\n"
-
-  message="✅ Format: <type>(<Scope>): <short description>"
-  printf "${BLUE}  ${message}${RESET}\n"
-
-  message="- <type>: feat, fix, docs, style, refactor, perf, test, chore"
-  printf "${BLUE}    ${message}${RESET}\n"
-
-  message="- <Scope>: Mandatory, allows one or more words (e.g., User Interface, Backend)"
-  printf "${BLUE}    ${message}${RESET}\n"
-
-  message="- <description>: Must start with an uppercase letter and be max 150 chars"
-  printf "${BLUE}    ${message}${RESET}\n\n"
-
-  message="Body (optional): Detailed description of the change."
-  printf "${BLUE}  ${message}${RESET}\n"
-
-  message="Footer (optional): Includes only \`Refs\` for task references in ClickUp."
-  printf "${BLUE}  ${message}${RESET}\n"
-  
-  message="  Example: Refs: #CU-86967ku38"
-  printf "${BLUE}    ${message}${RESET}\n\n"
-
-  message="Examples:"
-  printf "${MAGENTA}${BOLD}Examples:${RESET}\n\n"
-  message="✅ feat(User Interface): Add user authentication feature"
-  printf "${GREEN}  ${message}${RESET}\n"
-  message="  Implemented a secure authentication flow using JWT tokens."
-  printf "${GREEN}    ${message}${RESET}\n"
-  message="  Refs: #CU-86967ku38" # Example task ID from ClickUp
-  printf "${GREEN}    ${message}${RESET}\n\n"
-
-  # Show the tip
-  message="💡 Tip: Use \`git commit --amend\` to modify your commit message."
-  print_line ${#message}
-  printf "${YELLOW}${BOLD}${message}${RESET}\n"
-  print_line ${#message}
-
-  printf "\n"
-
-  # Finally, display the error message at the very end with line separators
-  message="❌ ERROR: Commit message does not follow the required format."
-  print_line ${#message}
-  printf "${RED}${BOLD}${message}${RESET}\n"
+  echo -e "${YELLOW}${message}${RESET}"
   print_line ${#message}
   
+  # Commit message format explanation
+  echo -e "${BLUE}  ✅ Format: <type>(<scope>): <short description>${RESET}"
+  echo -e "${BLUE}    - <type>: One of ($(IFS=\,; echo "${TYPES[*]}"))${RESET}"
+  echo -e "${BLUE}    - <scope>: One of ($(IFS=\,; echo "${SCOPES[*]}"))${RESET}"
+  echo -e "${BLUE}    - <description>: Starts with uppercase, max $SHORT_DESC_LENGTH chars${RESET}\n"
+  echo -e "${BLUE}  Body (optional): Detailed change description (multiline supported).${RESET}\n"
+  echo -e "${BLUE}  Footer (required): ${REFS_REGEX}${RESET}\n"
+
+  # Examples
+  echo -e "${MAGENTA}${BOLD}Examples:${RESET}\n"
+  echo -e "${RED}  ❌ add user authentication feature${RESET}\n"
+  echo -e "${GREEN}  ✅ feat(Authentication): Add user authentication feature${RESET}"
+  echo -e "${GREEN}     Implemented a secure flow.${RESET}"
+  echo -e "${GREEN}     Refs: #CU-12345${RESET}\n"
+  echo -e "${GREEN}  ✅ fix(API): Resolve API endpoint errors${RESET}"
+  echo -e "${GREEN}     Fixed timeout issues in user endpoints.${RESET}"
+  echo -e "${GREEN}     Refs: #CU-67890${RESET}\n"
+  echo -e "${GREEN}  ✅ test(Database): Add tests for database migrations${RESET}"
+  echo -e "${GREEN}     Verified integrity during schema updates.${RESET}"
+  echo -e "${GREEN}     Refs: #CU-98765${RESET}\n"
+
+  # Tip for modification
+  print_line ${#TIP_MSG}
+  echo -e "${YELLOW}${BOLD}$TIP_MSG${RESET}"
+  print_line ${#TIP_MSG}
+
+  # Final error message
+  print_line ${#ERROR_MSG}
+  echo -e "${RED}${BOLD}$ERROR_MSG${RESET}"
+  print_line ${#ERROR_MSG}
   exit 1
-
-fi
-
 fi
