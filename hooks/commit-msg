@@ -24,8 +24,11 @@ SUCCESS_MSG="✅ SUCCESS: Your commit message follows the correct format."
 ERROR_MSG="❌ ERROR: Commit message does not follow the required format."
 EMPTY_MSG="❌ ERROR: Commit message is empty."
 TIP_MSG="💡 Tip: Use \`git commit --amend\` to modify your commit message."
-MISSING_SHORT_DESC="${RED}❌ ERROR: Short description is missing or improperly formatted.${RESET}"
-SHORT_DESC_LIMIT="${RED}❌ ERROR: Short description exceeds limit characters.${RESET}"
+MISSING_SHORT_DESC="❌ ERROR: Short description is missing or improperly formatted."
+SHORT_DESC_LIMIT="ERROR: Short description exceeds limit characters."
+INVALID_COMMIT_TYPE="❌ ERROR: Invalid commit type."
+INVALID_COMMIT_SCOPE="❌ ERROR: Invalid commit scope."
+INVALID_REFS_ID="❌ ERROR: Invalid 'Refs' line."
 
 # Define type and scope options in arrays
 TYPES=("feat" "fix" "docs" "style" "refactor" "perf" "test" "chore")
@@ -66,13 +69,44 @@ SHORT_DESC=$(echo "$COMMIT_MSG" | sed -n 's/^[^:]*: \(.*\)$/\1/p' | head -n 1)
 
 # Validate short description
 if [[ -z "$SHORT_DESC" ]]; then
-  echo -e $MISSING_SHORT_DESC
+  print_line ${#MISSING_SHORT_DESC}
+  echo -e "${RED}${BOLD}$MISSING_SHORT_DESC${RESET}"
+  print_line ${#MISSING_SHORT_DESC}
+
   exit 1
 fi
 
 # Ensure short description length is within limits
 if (( ${#SHORT_DESC} > $SHORT_DESC_LENGTH )); then
-  echo -e $SHORT_DESC_LIMIT
+  print_line ${#SHORT_DESC_LIMIT}
+  echo -e "${RED}${BOLD}$SHORT_DESC_LIMIT${RESET}"
+  print_line ${#SHORT_DESC_LIMIT}
+  exit 1
+fi
+
+# Validate the type
+TYPE=$(echo "$COMMIT_MSG" | sed -n 's/^\([a-zA-Z]*\)(.*):.*/\1/p')
+if [[ ! " ${TYPES[@]} " =~ " ${TYPE} " ]]; then
+  print_line ${#INVALID_COMMIT_TYPE}
+  echo -e "${RED}${BOLD}$INVALID_COMMIT_TYPE${RESET}"
+  print_line ${#INVALID_COMMIT_TYPE}
+  exit 1
+fi
+
+# Validate the scope
+SCOPE=$(echo "$COMMIT_MSG" | sed -n 's/^[a-zA-Z]*(\([a-zA-Z]*\)):.*$/\1/p')
+if [[ ! " ${SCOPES[@]} " =~ " ${SCOPE} " ]]; then
+  print_line ${#INVALID_COMMIT_SCOPE}
+  echo -e "${RED}${BOLD}$INVALID_COMMIT_SCOPE${RESET}"
+  print_line ${#INVALID_COMMIT_SCOPE}
+  exit 1
+fi
+
+# Validate refs line (optional)
+if [[ ! "$COMMIT_MSG" =~ $REFS_REGEX ]]; then
+  print_line ${#INVALID_REFS_ID}
+  echo -e "${RED}${BOLD}$INVALID_REFS_ID${RESET}"
+  print_line ${#INVALID_REFS_ID}
   exit 1
 fi
 
@@ -114,6 +148,8 @@ else
   print_line ${#TIP_MSG}
   echo -e "${YELLOW}${BOLD}$TIP_MSG${RESET}"
   print_line ${#TIP_MSG}
+
+  printf "\n"
 
   # Final error message
   print_line ${#ERROR_MSG}
