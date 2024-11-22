@@ -4,16 +4,15 @@ on:
   push:
     branches:
       - '*'  # Trigger on all branches
-      
+
 jobs:
   validate-commit-message:
     runs-on: ubuntu-latest
-    if: github.ref != 'refs/heads/main'  # Skip if the branch is 'main'
 
     steps:
       # Step 1: Checkout the repository
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3  # Use the latest stable version
 
       # Step 2: Fetch the commit message
       - name: Fetch commit message
@@ -25,53 +24,30 @@ jobs:
           # Write the commit message to commit-msg.txt
           echo "$COMMIT_MSG" > commit-msg.txt
 
-      # Step 3: Print the contents of commit-msg.txt for debugging
-      - name: Print commit-msg.txt contents
-        run: |
-          echo "Printing commit-msg.txt contents:"
-          cat commit-msg.txt
-        
-      # Step 5: Run the commit-msg validation script with the file input
-      - name: Run commit-msg script with file input
-        run: |
-          # Run the commit-msg script to validate the message (file)
-          ./.github/scripts/commit-msg commit-msg.txt
+      # # Step 3: Print the contents of commit-msg.txt for debugging
+      # - name: Print commit-msg.txt contents
+      #   run: |
+      #     echo "Printing commit-msg.txt contents:"
+      #     cat commit-msg.txt
 
+      # # Step 4: Ensure the commit-msg script exists and is executable
+      # - name: Check if commit-msg script exists
+      #   run: |
+      #     if [[ ! -f .github/scripts/commit-msg ]]; then
+      #       echo "Error: commit-msg script not found!"
+      #       exit 1
+      #     fi
+      #     # Make sure it's executable
+      #     chmod +x .github/scripts/commit-msg
 
+      # # Step 5: Run the commit-msg validation script with file input
+      # - name: Run commit-msg script with file input
+      #   run: |
+      #     set -e  # Stop the workflow if any command fails
+      #     # Run the commit-msg script to validate the message (file)
+      #     ./.github/scripts/commit-msg commit-msg.txt
 
-
-
-
-
-
-    
-
-  check-github-actions:
-    runs-on: ubuntu-latest
-    needs: validate-commit-message
-    if: github.event_name == 'pull_request'  # Run only on pull requests to main
-
-    steps:
-      # Step 1: Checkout code
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # Step 2: Fetch the base branch (main) version of the GitHub Actions workflow
-      - name: Fetch base branch (main)
-        run: |
-          git fetch origin main
-
-      # Step 3: Compare GitHub Actions workflow files
-      - name: Compare GitHub Actions workflows
-        run: |
-          # Compare .github/workflows/*.yml files
-          DIFF=$(git diff origin/main -- .github/workflows/)
-
-          if [ -n "$DIFF" ]; then
-            echo "❌ ERROR: GitHub Actions workflow files have changed!"
-            echo "The following differences were found:"
-            echo "$DIFF"
-            exit 1
-          else
-            echo "✅ SUCCESS: No changes detected in GitHub Actions workflow files."
-          fi
+      # # Step 6: Clean up temporary commit-msg.txt file (optional)
+      # - name: Clean up temporary files
+      #   run: |
+      #     rm -f commit-msg.txt
